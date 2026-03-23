@@ -20,7 +20,7 @@ pipeline {
             sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=NETLIPROJ -Dsonar.projectKey=NETLIPROJ"
       }
     }
-  }
+  
 
   stage('BUILD') {
       steps {
@@ -51,5 +51,6 @@ pipeline {
       }
     }
   }
+}
 
-  
+}  
