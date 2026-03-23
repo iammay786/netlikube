@@ -1,19 +1,55 @@
 pipeline {
   agent any
 
+  environment {
+    SONAR_HOME = tool "Sonar"
+    IMAGE_NAME = "iammay786/kbimg"
+    IMAGE_TAG = "$(BUILD_NUMBER)"
+    DOCKER_CREDS = credentials('dockerhub-creds')
+    }
+
   stages {
     stage('CODE') {
       steps {
-        git url:"", branch:"main"
+        git url:"https://github.com/iammay786/netlikube.git", branch:"main"
       }
     }
-  }
-  stages {
-    stage('EKS CLUSTER DEPLOY') {
+    stage('Sonarqube Analysis') {
       steps {
-        sh " aws eks --region ap-south-1 update-kubeconfig --name netlicluster "
-        sh " kubectl get pods"
+        withSonarQubeEnv("Sonar")
+            sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=NETLIPROJ -Dsonar.projectKey=NETLIPROJ"
       }
     }
   }
-}
+
+  stage('BUILD') {
+      steps {
+        sh " docker build -t $IMAGE_NAME:$IAMAGE_NAME_TAG . "
+      }
+  }
+
+  stage("IMAGE_CHECK") {
+       steps {
+         sh " trivy image --severity CRITICAL --exit-code 0 $IMAGE_NAME:$IMAGE_TAG"
+       }
+  }
+
+  stage('IMAGE_PUSH') {
+     steps {
+       sh " echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin "
+       sh " docker push $IMAGE_NAME:$IMAGE_TAG"
+     }
+  }
+
+  stage("Deploy to K8s") {
+    steps {
+      withAWS(credentials: 'aws-creds') {
+        sh 'aws eks --region ap-south-1 update-kubeconfig --name netlicluster'
+        sh "sed -i 's|IMAGE_PLACEHOLDER|${IMAGE_NAME}:${IMAGE_TAG}|G' k8s/deployment.yaml"
+           sh "kubectl apply -f k8s/deployment.yaml"
+           sh "kubectl apply -f k8s/service.yaml"
+      }
+    }
+  }
+
+  
