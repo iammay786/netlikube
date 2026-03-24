@@ -4,7 +4,7 @@ pipeline {
   environment {
     SONAR_HOME = tool "Sonar"
     IMAGE_NAME = "iammay786/kbimg"
-    IMAGE_TAG = "$(BUILD_NUMBER)"
+    IMAGE_TAG = "${BUILD_NUMBER}"
     DOCKER_CREDS = credentials('dockerhub-creds')
     }
 
