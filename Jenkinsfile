@@ -38,7 +38,7 @@ pipeline {
 
         stage('IMAGE_PUSH') {
             steps {
-                sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
+                sh " echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin "
                 sh "docker push $IMAGE_NAME:$IMAGE_TAG"
             }
         }
